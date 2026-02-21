@@ -1,28 +1,91 @@
 #!/bin/bash
-# ClawSync Sync - Secure Version
+# ClawSync - Secure Backup Script
 
-WORKSPACE="${OPENCLAW_WORKSPACE:-$HOME/openclaw-workspace}"
-BACKUP_REPO="${BACKUP_REPO:-}"
+# === Pre-flight Check ===
+REQUIRED_VARS=("BACKUP_REPO" "OPENCLAW_WORKSPACE")
+for var in "${REQUIRED_VARS[@]}"; do
+    if [ -z "${!var}" ]; then
+        echo "Error: $var is not set. Please configure in .env"
+        exit 1
+    fi
+done
+
+WORKSPACE="${OPENCLAW_WORKSPACE}"
+BACKUP_REPO="${BACKUP_REPO}"
 BRANCH="${BACKUP_BRANCH:-main}"
 TOKEN="${GITHUB_TOKEN:-}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKUP_DIR="${SCRIPT_DIR}"
 
-# Copy Identity files
-for file in AGENTS.md SOUL.md USER.md MEMORY.md TOOLS.md IDENTITY.md SITES.md HEARTBEAT.md; do
-    [ -f "$WORKSPACE/$file" ] && cp "$WORKSPACE/$file" "$BACKUP_DIR/" 2>/dev/null || true
+echo "=== ClawSync Backup ==="
+
+# === Strict Whitelist: Identity Files ===
+WHITELIST=("AGENTS.md" "SOUL.md" "USER.md" "TOOLS.md" "IDENTITY.md" "SITES.md" "HEARTBEAT.md")
+
+for file in "${WHITELIST[@]}"; do
+    if [ -f "$WORKSPACE/$file" ]; then
+        cp "$WORKSPACE/$file" "$BACKUP_DIR/"
+    fi
 done
 
-# Copy Skills & Scripts
-[ -d "$WORKSPACE/skills" ] && cp -r "$WORKSPACE/skills" "$BACKUP_DIR/"
-[ -d "$WORKSPACE/scripts" ] && cp -r "$WORKSPACE/scripts" "$BACKUP_DIR/"
+# === Safe Copy: Skills (with deny list) ===
+DENY_LIST=(".env" "credentials" ".git" "node_modules" "venv" "__pycache__")
+
+if [ -d "$WORKSPACE/skills" ]; then
+    rm -rf "$BACKUP_DIR/skills"
+    mkdir -p "$BACKUP_DIR/skills"
+    
+    for skill in "$WORKSPACE/skills"/*; do
+        [ -d "$skill" ] || continue
+        
+        # Check deny list
+        skip=false
+        for deny in "${DENY_LIST[@]}"; do
+            if [ "$skill" == *"${deny}" ]; then
+                skip=true
+                break
+            fi
+        done
+        
+        [ "$skip" = false ] && cp -r "$skill" "$BACKUP_DIR/skills/"
+    done
+fi
+
+# === Safe Copy: Scripts (with deny list) ===
+if [ -d "$WORKSPACE/scripts" ]; then
+    rm -rf "$BACKUP_DIR/scripts"
+    mkdir -p "$BACKUP_DIR/scripts"
+    
+    for script in "$WORKSPACE/scripts"/*; do
+        [ -f "$script" ] || continue
+        
+        # Check deny list
+        skip=false
+        for deny in "${DENY_LIST[@]}"; do
+            if [ "$script" == *"${deny}" ]; then
+                skip=true
+                break
+            fi
+        done
+        
+        [ "$skip" = false ] && cp -r "$script" "$BACKUP_DIR/scripts/"
+    done
+fi
+
+echo "Files copied"
 
 cd "$BACKUP_DIR"
 [ ! -d ".git" ] && git init && git remote add origin "https://github.com/${BACKUP_REPO}.git"
 git add -A
 
-# Define the secure git command
+# === Secret Scrubbing ===
+if git diff --cached | grep -qE "(ghp_[a-zA-Z0-9]{36}|sk-[a-zA-Z0-9]{20,}|AIza[a-zA-Z0-9_-]{35})"; then
+    echo "Error: Potential API key detected in staged files. Aborting push."
+    exit 1
+fi
+
+# === Git Push ===
 if gh auth status &>/dev/null; then
     GIT_CMD="git"
     gh auth setup-git
