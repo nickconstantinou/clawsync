@@ -1,48 +1,40 @@
 #!/bin/bash
-# ClawBack Restore - Restore OpenClaw workspace from backup
+# ClawBack Restore - Secure Version
 
 WORKSPACE="${OPENCLAW_WORKSPACE:-$HOME/openclaw-workspace}"
 BACKUP_REPO="${BACKUP_REPO:-}"
 BRANCH="${BACKUP_BRANCH:-main}"
 TOKEN="${GITHUB_TOKEN:-}"
 
-use_gh_auth() {
-    if gh auth status &>/dev/null; then
-        gh auth setup-git
-        return 0
-    fi
-    return 1
-}
-
-use_token_auth() {
-    [ -z "$TOKEN" ] && exit 1
-    git remote set-url origin "https://github.com/${BACKUP_REPO}.git"
-    git config http.extraHeader "Authorization: bearer ${TOKEN}"
-}
-
-echo "=== ClawBack Restore ==="
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BACKUP_DIR="$SCRIPT_DIR"
+BACKUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 mkdir -p "$WORKSPACE"
 
-# Clone or pull
-if [ -d "$BACKUP_DIR/.git" ]; then
-    cd "$BACKUP_DIR"
-    use_gh_auth || use_token_auth
-    git pull origin "$BRANCH" 2>/dev/null || true
+# Auth check
+if gh auth status &>/dev/null; then
+    GIT_CMD="git"
+    gh auth setup-git
 else
-    use_gh_auth || use_token_auth
-    git clone "https://github.com/${BACKUP_REPO}.git" "$BACKUP_DIR"
-    cd "$BACKUP_DIR"
+    [ -z "$TOKEN" ] && { echo "Error: No GH auth or GITHUB_TOKEN"; exit 1; }
+    GIT_CMD="git -c http.extraHeader=\"Authorization: bearer ${TOKEN}\""
 fi
 
-# Restore files
-for file in AGENTS.md SOUL.md USER.md MEMORY.md TOOLS.md IDENTITY.md SITES.md HEARTBEAT.md; do
+# Clone or pull securely
+if [ -d "$BACKUP_DIR/.git" ]; then
+    cd "$BACKUP_DIR"
+    eval "$GIT_CMD pull origin $BRANCH"
+else
+    TEMP_DIR=$(mktemp -d)
+    eval "$GIT_CMD clone \"https://github.com/${BACKUP_REPO}.git\" \"$TEMP_DIR\""
+    cp -rn "$TEMP_DIR/." "$BACKUP_DIR/"
+    rm -rf "$TEMP_DIR"
+fi
+
+# Move files to workspace
+cp -r "$BACKUP_DIR/skills" "$WORKSPACE/" 2>/dev/null || true
+cp -r "$BACKUP_DIR/scripts" "$WORKSPACE/" 2>/dev/null || true
+
+for file in AGENTS.md SOUL.md USER.md MEMORY.md TOOLS.md IDENTITY.md; do
     [ -f "$BACKUP_DIR/$file" ] && cp "$BACKUP_DIR/$file" "$WORKSPACE/"
 done
 
-[ -d "$BACKUP_DIR/skills" ] && mkdir -p "$WORKSPACE/skills" && cp -r "$BACKUP_DIR/skills/"* "$WORKSPACE/skills/"
-[ -d "$BACKUP_DIR/scripts" ] && mkdir -p "$WORKSPACE/scripts" && cp -r "$BACKUP_DIR/scripts/"* "$WORKSPACE/scripts/"
-
-echo "=== Restore Complete ==="
-echo "Files restored to: $WORKSPACE"
+echo "Restore Complete."
