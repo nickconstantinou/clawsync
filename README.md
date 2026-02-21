@@ -1,11 +1,11 @@
-# ClawBack
+# ClawSync
 
 Backup and restore your OpenClaw workspace to GitHub.
 
 ## Quick Start
 
 ```bash
-git clone https://github.com/your-username/clawback.git ~/clawback
+git clone https://github.com/your-username/ClawSync.git ~/ClawSync
 cp .env.example .env
 # Edit .env with your values
 bash sync.sh

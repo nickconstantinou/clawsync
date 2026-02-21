@@ -1,5 +1,5 @@
 ---
-name: clawback
+name: ClawSync
 description: Backup and restore your OpenClaw workspace to GitHub
 metadata:
   {
@@ -10,7 +10,7 @@ metadata:
   }
 ---
 
-# ClawBack
+# ClawSync
 
 Backup and restore your OpenClaw workspace to GitHub.
 
@@ -42,7 +42,7 @@ export OPENCLAW_WORKSPACE="${HOME}/openclaw-workspace"
 ## Quick Start
 
 ```bash
-git clone https://github.com/your-username/clawback.git ~/clawback
+git clone https://github.com/your-username/ClawSync.git ~/ClawSync
 cp .env.example .env
 # Edit .env with your values
 bash sync.sh

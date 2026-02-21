@@ -1,5 +1,5 @@
 #!/bin/bash
-# ClawBack Restore - Secure Version
+# ClawSync Restore - Secure Version
 
 WORKSPACE="${OPENCLAW_WORKSPACE:-$HOME/openclaw-workspace}"
 BACKUP_REPO="${BACKUP_REPO:-}"
