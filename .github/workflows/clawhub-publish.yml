@@ -20,4 +20,5 @@ jobs:
           CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
         run: |
           npm install -g clawhub
+          clawhub login --token "$CLAWHUB_TOKEN" --no-browser
           clawhub publish . --version v1.0.0
