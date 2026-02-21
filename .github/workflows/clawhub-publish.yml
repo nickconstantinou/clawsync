@@ -11,10 +11,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
       - name: Publish to ClawHub
+        env:
+          CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
         run: |
-          # Install clawhub CLI
           npm install -g clawhub
-          
-          # Publish the skill
-          clawhub publish --skill .
+          clawhub publish --skill . --token $CLAWHUB_TOKEN
