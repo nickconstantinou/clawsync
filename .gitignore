@@ -1,0 +1,42 @@
+# Secrets
+.env
+.env.*
+credentials/
+*token*
+*secret*
+password*
+
+# OpenClaw runtime
+openclaw.json
+identity/
+devices/
+cron/
+
+# Build outputs
+node_modules/
+venv/
+__pycache__/
+
+# Media
+*.mp4
+*.jpg
+*.png
+*.zip
+
+# Git
+.git/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+tmp/
+
+# Memory
+memory/
