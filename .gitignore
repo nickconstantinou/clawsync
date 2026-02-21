@@ -40,3 +40,6 @@ tmp/
 
 # Memory
 memory/
+
+# Nested git repos
+skills/*/.git

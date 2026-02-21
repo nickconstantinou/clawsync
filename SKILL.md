@@ -42,14 +42,9 @@ export OPENCLAW_WORKSPACE="${HOME}/openclaw-workspace"
 ## Quick Start
 
 ```bash
-# Clone
 git clone https://github.com/your-username/clawback.git ~/clawback
-
-# Configure
 cp .env.example .env
 # Edit .env with your values
-
-# First backup
 bash sync.sh
 ```
 
