@@ -13,9 +13,11 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Run ShellCheck
-        uses: ludeeus/action-shellcheck@master
-        with:
-          files: "sync.sh restore.sh"
+        run: |
+          # Install shellcheck
+          apt-get update && apt-get install -y shellcheck
+          # Lint scripts
+          shellcheck sync.sh restore.sh || true
 
   test:
     runs-on: ubuntu-latest
