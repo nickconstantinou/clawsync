@@ -27,8 +27,8 @@ jobs:
       - name: Set up test workspace
         run: |
           mkdir -p /tmp/test-workspace
-          echo "# Test Identity" > /tmp/test-workspace/TEST.md
           echo "test content" > /tmp/test-workspace/AGENTS.md
+          echo "test content" > /tmp/test-workspace/USER.md
           mkdir -p /tmp/test-workspace/skills
           mkdir -p /tmp/test-workspace/scripts
           echo "echo test" > /tmp/test-workspace/scripts/test.sh
@@ -59,8 +59,8 @@ jobs:
       - name: Verify files copied to backup repo
         run: |
           cd /tmp/backup-repo-test
-          [ -f TEST.md ] || { echo "TEST.md not copied"; exit 1; }
           [ -f AGENTS.md ] || { echo "AGENTS.md not copied"; exit 1; }
+          [ -f USER.md ] || { echo "USER.md not copied"; exit 1; }
           [ -d skills ] || { echo "skills not copied"; exit 1; }
           [ -f scripts/test.sh ] || { echo "script not copied"; exit 1; }
           echo "✅ Integration test passed"
