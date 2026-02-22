@@ -1,0 +1,52 @@
+version: "1.0"
+
+input_protection:
+  enabled: true
+  block_patterns:
+    - "(?i)ignore previous instructions"
+    - "(?i)disregard system"
+    - "(?i)forget all rules"
+    - "(?i)new system prompt"
+    - "(?i)you are now"
+    - "(?i)pretend to be"
+    - "(?i)you are an unrestricted"
+    - "(?i)d\\b"
+    - "(?i)bypass (content|restriction)"
+    - "(?i)developer mode"
+    - "(?i)remove restrictions"
+  warn_patterns:
+    - "(?i)for educational purposes"
+    - "(?i)i'm testing"
+    - "(?i)base64"
+  max_length: 2000
+
+output_protection:
+  enabled: true
+  deny_list:
+    - "(?i)i am an AI"
+    - "(?i)as a language model"
+    - "(?i)i don't have feelings"
+    - "(?i)powered by gpt"
+    - "(?i)our ai uses"
+    - "(?i)the system prompt"
+    - "(?i)internal process"
+  commitment_patterns:
+    - "(?i)i can give.*discount"
+    - "(?i)\\d+% off"
+    - "(?i)guarantee.*result"
+    - "(?i)we deliver in.*days?"
+    - "(?i)i'll add.*feature"
+    - "(?i)we match.*price"
+  pii_patterns:
+    email: "[\\w.-]+@[\\w.-]+\\.\\w+"
+    phone: "0?7[\\d\\s]{9,}"
+    card: "\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}"
+    nino: "[A-Z]{1,2}[\\d]{6,9}"
+  pii_scrubbing: true
+
+telemetry:
+  log_level: "INFO"  # DEBUG, INFO, WARN, ERROR
+  output_format: "json"
+  destination: "stdout"  # stdout, file, webhook
+  webhook_url: ""
+  log_file: "/tmp/prompt-guard-telemetry.jsonl"
