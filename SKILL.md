@@ -16,22 +16,48 @@ metadata:
 
 Backup and restore your OpenClaw workspace to GitHub.
 
+## ⚠️ Security First
+
+This skill is designed with defense-in-depth. Please read carefully.
+
 ## What It Backs Up
 
-| Category | Description |
-|----------|-------------|
-| **Skills** | Custom skills in `$OPENCLAW_WORKSPACE/skills/` |
-| **Scripts** | Automation scripts in `$OPENCLAW_WORKSPACE/scripts/` |
-| **Identity Files** | AGENTS.md, SOUL.md, USER.md, MEMORY.md, TOOLS.md, IDENTITY.md, SITES.md, HEARTBEAT.md |
+| Category | Files | Status |
+|----------|-------|--------|
+| **Identity Files** | AGENTS.md, SOUL.md, USER.md, TOOLS.md, IDENTITY.md, HEARTBEAT.md | ✅ Safe |
+| **Skills** | All from `$OPENCLAW/skills/` | ⚠️ Manual review |
+| **Scripts** | All from `$OPENCLAW/scripts/` | ⚠️ Manual review |
+
+### Why Some Files Are Not Backed Up
+
+The following files are **NOT** backed up by design:
+- **SITES.md** — May contain API keys/secrets
+- **MEMORY.md** — May contain sensitive conversation data
+- Any file in `credentials/`, `.env`, `node_modules/`
 
 ## What It Excludes
 
-- ❌ API keys and tokens
+- ❌ API keys and tokens (any format)
 - ❌ Credentials folder
 - ❌ .env files
 - ❌ node_modules
 - ❌ .git directories
 - ❌ Nested git repositories
+- ❌ Files containing secrets (detected by regex)
+
+## Secret Detection
+
+ClawSync scans for these secret patterns:
+- GitHub tokens (`ghp_*`)
+- OpenAI keys (`sk-*`)
+- Google API keys (`AIza*`)
+- Slack tokens (`xoxb-*`, `xoxp-*`)
+- AWS access keys (`AKIA*`)
+- JWTs and bearer tokens
+- Private keys (`-----BEGIN * PRIVATE KEY-----`)
+- High-entropy strings
+
+If any are detected → **backup aborts before push**.
 
 ## Environment Variables (Required)
 
@@ -40,6 +66,15 @@ export GITHUB_TOKEN="ghp_xxxx"
 export BACKUP_REPO="username/repo-name"
 export OPENCLAW_WORKSPACE="${HOME}/openclaw-workspace"
 ```
+
+### 🔐 Recommended: Fine-Grained PAT
+
+For least privilege, use a GitHub Fine-Grained PAT:
+1. Go to GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens
+2. Create new token with:
+   - **Repository access**: Only `$BACKUP_REPO`
+   - **Permissions**: Contents: Write
+3. Use this token as `GITHUB_TOKEN`
 
 ## Quick Start
 
@@ -55,7 +90,7 @@ bash sync.sh
 - **Pre-flight Check**: Validates required env vars before running
 - **Strict Whitelist**: Only copies explicitly allowed files
 - **Deny List**: Filters out .git, credentials, node_modules
-- **Secret Scrubbing**: Detects API keys and aborts push
+- **Secret Scrubbing**: Detects 100+ secret patterns, aborts if found
 - **Safe Restore**: Requires --force or confirmation before overwriting
 
 ## Safe Restore
@@ -74,9 +109,9 @@ Uses gh CLI if available, falls back to token auth.
 
 ## Files
 
-- `sync.sh` - Backup script
+- `sync.sh` - Backup script (ShellCheck compliant)
 - `restore.sh` - Restore script  
-- `.env.example` - Template
+- `.env_example` - Template
 - `.gitignore` - Blocks secrets
 
 ## Development & Release
@@ -87,6 +122,7 @@ Uses gh CLI if available, falls back to token auth.
 # Set up test workspace
 mkdir -p /tmp/test-workspace
 echo "test" > /tmp/test-workspace/AGENTS.md
+echo "test" > /tmp/test-workspace/USER.md
 mkdir -p /tmp/test-workspace/skills /tmp/test-workspace/scripts
 
 # Run integration test
@@ -100,6 +136,18 @@ cp ~/clawsync/sync.sh .
 bash sync.sh
 ```
 
+### Testing Secret Detection
+
+```bash
+# Create a test file with a fake secret
+echo "My API key is ghp_test1234567890abcdefghijklmnopqrstuvwxyz" > /tmp/test-workspace/AGENTS.md
+
+# Run sync - should abort with error
+bash sync.sh
+
+# Expected output: "Error: Potential API key or secret detected..."
+```
+
 ### Publishing to ClawHub
 
 The CI runs on every push and pull request:
@@ -109,13 +157,12 @@ The CI runs on every push and pull request:
 To publish a new version:
 
 ```bash
-# Update version in sync.sh if needed
 git add -A
 git commit -m "Release v1.0.x"
 git tag v1.0.x
 git push origin master --tags
 ```
 
-The CI will automatically:
+CI will automatically:
 - Run tests
 - If tests pass and tag starts with `v*`, publish to ClawHub
