@@ -78,3 +78,44 @@ Uses gh CLI if available, falls back to token auth.
 - `restore.sh` - Restore script  
 - `.env.example` - Template
 - `.gitignore` - Blocks secrets
+
+## Development & Release
+
+### Running Tests Locally
+
+```bash
+# Set up test workspace
+mkdir -p /tmp/test-workspace
+echo "test" > /tmp/test-workspace/AGENTS.md
+mkdir -p /tmp/test-workspace/skills /tmp/test-workspace/scripts
+
+# Run integration test
+export BACKUP_REPO="test/repo"
+export OPENCLAW_WORKSPACE="/tmp/test-workspace"
+export GITHUB_TOKEN="dummy"
+
+cd /tmp && rm -rf test-backup-repo && mkdir test-backup-repo
+cd test-backup-repo && git init
+cp ~/clawsync/sync.sh .
+bash sync.sh
+```
+
+### Publishing to ClawHub
+
+The CI runs on every push and pull request:
+1. **ShellCheck** - Lints bash scripts
+2. **Integration test** - Verifies backup/restore works
+
+To publish a new version:
+
+```bash
+# Update version in sync.sh if needed
+git add -A
+git commit -m "Release v1.0.x"
+git tag v1.0.x
+git push origin master --tags
+```
+
+The CI will automatically:
+- Run tests
+- If tests pass and tag starts with `v*`, publish to ClawHub
