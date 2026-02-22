@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          files: "sync.sh restore.sh"
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up test workspace
+        run: |
+          mkdir -p /tmp/test-workspace
+          echo "# Test" > /tmp/test-workspace/TEST.md
+          mkdir -p /tmp/test-workspace/skills
+          mkdir -p /tmp/test-workspace/scripts
+          echo "echo test" > /tmp/test-workspace/scripts/test.sh
+          chmod +x /tmp/test-workspace/scripts/test.sh
+      
+      - name: Set environment
+        run: |
+          echo "BACKUP_REPO=test/repo" >> $GITHUB_ENV
+          echo "OPENCLAW_WORKSPACE=/tmp/test-workspace" >> $GITHUB_ENV
+          echo "GITHUB_TOKEN=dummy" >> $GITHUB_ENV
+      
+      - name: Run sync.sh (dry run)
+        run: |
+          # Create a dummy git repo to avoid push errors
+          git config --global user.email "test@test.com"
+          git config --global user.name "Test"
+          git init
+          git remote add origin https://github.com/test/repo.git
+          # Run sync - it will try to push but that's ok for test
+          bash sync.sh || echo "Sync attempted (expected to fail on push)"
+      
+      - name: Verify files copied
+        run: |
+          # Check identity files were copied
+          [ -f TEST.md ] || { echo "TEST.md not copied"; exit 1; }
+          [ -d skills ] || { echo "skills not copied"; exit 1; }
+          [ -f scripts/test.sh ] || { echo "script not copied"; exit 1; }
+          echo "✅ Integration test passed"
+
+  publish:
+    needs: [lint, test]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Publish to ClawHub
+        env:
+          CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
+        run: |
+          npm install -g clawhub
+          clawhub login --token "$CLAWHUB_TOKEN" --no-browser
+          VERSION=${GITHUB_REF#refs/tags/v}
+          clawhub publish . --version $VERSION
