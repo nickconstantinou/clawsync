@@ -82,6 +82,7 @@ git add -A
 # === Secret Scrubbing ===
 if git diff --cached | grep -qE "(ghp_[a-zA-Z0-9]{36}|sk-[a-zA-Z0-9]{20,}|AIza[a-zA-Z0-9_-]{35})"; then
     echo "Error: Potential API key detected in staged files. Aborting push."
+    git reset
     exit 1
 fi
 
