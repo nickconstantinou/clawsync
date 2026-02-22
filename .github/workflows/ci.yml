@@ -25,7 +25,8 @@ jobs:
       - name: Set up test workspace
         run: |
           mkdir -p /tmp/test-workspace
-          echo "# Test" > /tmp/test-workspace/TEST.md
+          echo "# Test Identity" > /tmp/test-workspace/TEST.md
+          echo "test content" > /tmp/test-workspace/AGENTS.md
           mkdir -p /tmp/test-workspace/skills
           mkdir -p /tmp/test-workspace/scripts
           echo "echo test" > /tmp/test-workspace/scripts/test.sh
@@ -37,20 +38,27 @@ jobs:
           echo "OPENCLAW_WORKSPACE=/tmp/test-workspace" >> $GITHUB_ENV
           echo "GITHUB_TOKEN=dummy" >> $GITHUB_ENV
       
-      - name: Run sync.sh (dry run)
+      - name: Run sync.sh in temp dir (simulates backup repo)
         run: |
-          # Create a dummy git repo to avoid push errors
+          # Create a fresh dir to act as backup repo
+          cd /tmp
+          rm -rf backup-repo-test
+          mkdir backup-repo-test
+          cd backup-repo-test
+          git init
           git config --global user.email "test@test.com"
           git config --global user.name "Test"
-          git init
-          git remote add origin https://github.com/test/repo.git
-          # Run sync - it will try to push but that's ok for test
-          bash sync.sh || echo "Sync attempted (expected to fail on push)"
+          # Copy sync.sh here
+          cp ${{ github.workspace }}/sync.sh .
+          cp ${{ github.workspace }}/restore.sh .
+          # Run it
+          bash sync.sh || echo "Push failed (expected - dummy token)"
       
-      - name: Verify files copied
+      - name: Verify files copied to backup repo
         run: |
-          # Check identity files were copied
+          cd /tmp/backup-repo-test
           [ -f TEST.md ] || { echo "TEST.md not copied"; exit 1; }
+          [ -f AGENTS.md ] || { echo "AGENTS.md not copied"; exit 1; }
           [ -d skills ] || { echo "skills not copied"; exit 1; }
           [ -f scripts/test.sh ] || { echo "script not copied"; exit 1; }
           echo "✅ Integration test passed"
