@@ -29,7 +29,7 @@ This file documents all Nick's projects for QA and maintenance.
 ### Data
 - Supabase: araqigsimkjsmwhnjesv
 - Tables: tutors, leads
-- **API Key (updated 2026-02-19):** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyYXFpZ3NpbWtqc213aG5qZXN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNjQ1NjIsImV4cCI6MjA4Njk0MDU2Mn0.UPwIMO3U6qr6DcPvaLqs5sOGnS9WeftbkJa_JYEA4fw`
+- **API Key (updated 2026-02-19):** `REDACTED_BY_SECURITY_POLICY`
 
 ### Skills
 - /skills/uk-tutors-marketing/SKILL.md

@@ -145,7 +145,33 @@ echo "My API key is ghp_test1234567890abcdefghijklmnopqrstuvwxyz" > /tmp/test-wo
 # Run sync - should abort with error
 bash sync.sh
 
-# Expected output: "Error: Potential API key or secret detected..."
+# Expected output: "Error: Potential secret detected..."
+```
+
+### Security Audit Test (Proves Non-Staged Detection)
+
+This test verifies the script catches secrets BEFORE they are staged:
+
+```bash
+# Set up test workspace
+export BACKUP_REPO="test/repo"
+export OPENCLAW_WORKSPACE="/tmp/test-workspace"
+export GITHUB_TOKEN="dummy"
+
+# Create workspace with secret in a non-staged file
+mkdir -p /tmp/test-workspace
+echo "Real API key: sk-realapikey12345678901234567890" > /tmp/test-workspace/AGENTS.md
+
+# Copy sync.sh to temp backup dir
+cd /tmp && rm -rf audit-test && mkdir audit-test && cd audit-test
+git init
+cp ~/clawsync/sync.sh .
+
+# Run sync - should FAIL (catches non-staged secret)
+bash sync.sh
+
+# Expected: "Error: Potential secret detected in backup directory!"
+# This proves the pre-git-add scanning works
 ```
 
 ### Publishing to ClawHub
