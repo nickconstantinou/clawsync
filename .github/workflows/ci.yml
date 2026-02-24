@@ -78,10 +78,24 @@ jobs:
         with:
           node-version: '20'
       
+      - name: Prepare publishable content
+        run: |
+          # Only publish the skill, not personal files
+          mkdir -p publish
+          cp -r skills/ publish/
+          cp sync.sh publish/
+          cp restore.sh publish/
+          cp SKILL.md publish/
+          cp README.md publish/
+          # Remove any sensitive files that might have been copied
+          rm -f publish/**/*.md 2>/dev/null || true
+          rm -f publish/**/.* 2>/dev/null || true
+      
       - name: Publish to ClawHub
         env:
           CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
         run: |
+          cd publish
           npm install -g clawhub
           clawhub login --token "$CLAWHUB_TOKEN" --no-browser
           VERSION=${GITHUB_REF#refs/tags/v}
