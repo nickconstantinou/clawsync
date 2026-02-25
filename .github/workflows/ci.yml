@@ -87,9 +87,9 @@ jobs:
           cp restore.sh publish/
           cp SKILL.md publish/
           cp README.md publish/
-          # Remove any sensitive files that might have been copied
-          rm -f publish/**/*.md 2>/dev/null || true
-          rm -f publish/**/.* 2>/dev/null || true
+          # List what's in publish to debug
+          ls -la publish/
+          ls -la publish/skills/ || true
       
       - name: Publish to ClawHub
         env:
