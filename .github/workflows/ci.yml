@@ -19,57 +19,18 @@ jobs:
           # Install shellcheck
           apt-get update && apt-get install -y shellcheck
           # Lint scripts
-          shellcheck sync.sh restore.sh || true
+          shellcheck sync.sh restore.sh scripts/test-*.sh || true
 
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       
-      - name: Set up test workspace (dynamically)
-        run: |
-          mkdir -p /tmp/test-workspace/skills /tmp/test-workspace/scripts
-          # Personal files that should NOT be copied
-          echo "personal" > /tmp/test-workspace/AGENTS.md
-          echo "personal" > /tmp/test-workspace/USER.md
-          # Test files that SHOULD be copied
-          echo "echo test" > /tmp/test-workspace/scripts/test.sh
-          mkdir -p /tmp/test-workspace/skills/test-skill
-          echo "# Test Skill" > /tmp/test-workspace/skills/test-skill/SKILL.md
+      - name: Run test-sync.sh
+        run: bash ./scripts/test-sync.sh
       
-      - name: Set environment
-        run: |
-          echo "BACKUP_REPO=test/repo" >> $GITHUB_ENV
-          echo "OPENCLAW_WORKSPACE=/tmp/test-workspace" >> $GITHUB_ENV
-          echo "GITHUB_TOKEN=dummy" >> $GITHUB_ENV
-      
-      - name: Run sync.sh in temp dir (simulates backup repo)
-        run: |
-          cd /tmp
-          rm -rf backup-repo-test
-          mkdir backup-repo-test
-          cd backup-repo-test
-          git init
-          git config --global user.email "test@test.com"
-          git config --global user.name "Test"
-          cp ${{ github.workspace }}/sync.sh .
-          cp ${{ github.workspace }}/restore.sh .
-          bash sync.sh || echo "Push failed (expected - dummy token)"
-      
-      - name: Verify files
-        run: |
-          cd /tmp/backup-repo-test
-          # Personal files should NOT be copied
-          [ ! -f AGENTS.md ] || { echo "AGENTS.md should NOT be copied"; exit 1; }
-          [ ! -f USER.md ] || { echo "USER.md should NOT be copied"; exit 1; }
-          [ ! -f SOUL.md ] || { echo "SOUL.md should NOT be copied"; exit 1; }
-          [ ! -f TOOLS.md ] || { echo "TOOLS.md should NOT be copied"; exit 1; }
-          # Verify test skill was copied
-          [ -d skills/test-skill ] || { echo "test-skill not copied"; exit 1; }
-          [ -f skills/test-skill/SKILL.md ] || { echo "SKILL.md not copied"; exit 1; }
-          # Verify script was copied
-          [ -f scripts/test.sh ] || { echo "script not copied"; exit 1; }
-          echo "✅ Integration test passed"
+      - name: Run test-restore.sh
+        run: bash ./scripts/test-restore.sh
 
   publish:
     needs: [lint, test]
