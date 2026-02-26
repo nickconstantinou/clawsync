@@ -35,6 +35,9 @@ jobs:
           mkdir -p /tmp/test-workspace/scripts
           echo "echo test" > /tmp/test-workspace/scripts/test.sh
           chmod +x /tmp/test-workspace/scripts/test.sh
+          # Create a test skill so the sync copies something
+          mkdir -p /tmp/test-workspace/skills/test-skill
+          echo "test skill" > /tmp/test-workspace/skills/test-skill/SKILL.md
       
       - name: Set environment
         run: |
@@ -70,7 +73,9 @@ jobs:
           [ ! -f HEARTBEAT.md ] || { echo "HEARTBEAT.md should NOT be copied"; exit 1; }
           [ ! -f SITES.md ] || { echo "SITES.md should NOT be copied"; exit 1; }
           # But skills and scripts should be copied
-          [ -d skills ] || { echo "skills not copied"; exit 1; }
+          [ -d skills ] || { echo "skills dir not copied"; exit 1; }
+          [ -d skills/test-skill ] || { echo "test-skill not copied"; exit 1; }
+          [ -f skills/test-skill/SKILL.md ] || { echo "SKILL.md not copied"; exit 1; }
           [ -f scripts/test.sh ] || { echo "script not copied"; exit 1; }
           echo "✅ Integration test passed"
 
