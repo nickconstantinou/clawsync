@@ -23,57 +23,46 @@ BACKUP_DIR="${SCRIPT_DIR}"
 
 echo "=== ClawSync Backup ==="
 
-# === Explicit Exclusions (Hardcoded) ===
-# These files are NEVER backed up - contains secrets/sensitive data
-EXCLUDE_FILES=("SITES.md" "MEMORY.md" ".env" "credentials" "node_modules" ".git" "venv" "__pycache__" "AGENTS.md" "SOUL.md" "USER.md" "TOOLS.md" "IDENTITY.md" "HEARTBEAT.md")
+# === Explicit Exclusions (Documented) ===
+# These files are NEVER backed up - see rsync --exclude flags below for actual enforcement
 
-# === Helper: Check if file should be excluded ===
-should_exclude() {
-    local file="$1"
-    for excl in "${EXCLUDE_FILES[@]}"; do
-        if [[ "$file" == *"$excl"* ]]; then
-            return 0
-        fi
-    done
-    return 1
-}
-
-# === Safe Copy: Skills (with explicit exclusion) ===
-if [[ -d "$WORKSPACE/skills" ]]; then
-    rm -rf "$BACKUP_DIR/skills"
-    mkdir -p "$BACKUP_DIR/skills"
-    
-    for skill in "$WORKSPACE/skills"/*; do
-        if [[ ! -d "$skill" ]]; then
-            continue
-        fi
-        
-        if should_exclude "$skill"; then
-            continue
-        fi
-        
-        # Copy, excluding .git directories
-        rsync -a --exclude='.git' --exclude='node_modules' "$skill/" "$BACKUP_DIR/skills/$(basename "$skill")/" 2>/dev/null || \
-            cp -r "$skill" "$BACKUP_DIR/skills/" 2>/dev/null || true
-    done
+# === Safe Copy: Skills using rsync with exclude patterns ===
+if [[ -d "$WORKSPACE/skills" ]] && [[ -n "$(ls -A "$WORKSPACE/skills/" 2>/dev/null)" ]]; then
+    rsync -a \
+        --exclude='.git' \
+        --exclude='node_modules' \
+        --exclude='AGENTS.md' \
+        --exclude='SOUL.md' \
+        --exclude='USER.md' \
+        --exclude='TOOLS.md' \
+        --exclude='IDENTITY.md' \
+        --exclude='HEARTBEAT.md' \
+        --exclude='SITES.md' \
+        --exclude='MEMORY.md' \
+        "$WORKSPACE/skills/" "$BACKUP_DIR/skills/" 2>/dev/null || {
+        # Fallback to cp if rsync fails
+        rm -rf "$BACKUP_DIR/skills"
+        cp -r "$WORKSPACE/skills" "$BACKUP_DIR/"
+    }
 fi
 
-# === Safe Copy: Scripts (with explicit exclusion) ===
-if [[ -d "$WORKSPACE/scripts" ]]; then
-    rm -rf "$BACKUP_DIR/scripts"
-    mkdir -p "$BACKUP_DIR/scripts"
-    
-    for script in "$WORKSPACE/scripts"/*; do
-        if [[ ! -f "$script" ]]; then
-            continue
-        fi
-        
-        if should_exclude "$script"; then
-            continue
-        fi
-        
-        cp -r "$script" "$BACKUP_DIR/scripts/"
-    done
+# === Safe Copy: Scripts using rsync with exclude patterns ===
+if [[ -d "$WORKSPACE/scripts" ]] && [[ -n "$(ls -A "$WORKSPACE/scripts/" 2>/dev/null)" ]]; then
+    rsync -a \
+        --exclude='.git' \
+        --exclude='AGENTS.md' \
+        --exclude='SOUL.md' \
+        --exclude='USER.md' \
+        --exclude='TOOLS.md' \
+        --exclude='IDENTITY.md' \
+        --exclude='HEARTBEAT.md' \
+        --exclude='SITES.md' \
+        --exclude='MEMORY.md' \
+        "$WORKSPACE/scripts/" "$BACKUP_DIR/scripts/" 2>/dev/null || {
+        # Fallback to cp if rsync fails
+        rm -rf "$BACKUP_DIR/scripts"
+        cp -r "$WORKSPACE/scripts" "$BACKUP_DIR/"
+    }
 fi
 
 echo "Files copied"

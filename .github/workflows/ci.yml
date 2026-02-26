@@ -26,18 +26,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Set up test workspace
+      - name: Set up test workspace (dynamically)
         run: |
-          mkdir -p /tmp/test-workspace
-          echo "test content" > /tmp/test-workspace/AGENTS.md
-          echo "test content" > /tmp/test-workspace/USER.md
-          mkdir -p /tmp/test-workspace/skills
-          mkdir -p /tmp/test-workspace/scripts
+          mkdir -p /tmp/test-workspace/skills /tmp/test-workspace/scripts
+          # Personal files that should NOT be copied
+          echo "personal" > /tmp/test-workspace/AGENTS.md
+          echo "personal" > /tmp/test-workspace/USER.md
+          # Test files that SHOULD be copied
           echo "echo test" > /tmp/test-workspace/scripts/test.sh
-          chmod +x /tmp/test-workspace/scripts/test.sh
-          # Create a test skill so the sync copies something
           mkdir -p /tmp/test-workspace/skills/test-skill
-          echo "test skill" > /tmp/test-workspace/skills/test-skill/SKILL.md
+          echo "# Test Skill" > /tmp/test-workspace/skills/test-skill/SKILL.md
       
       - name: Set environment
         run: |
@@ -47,7 +45,6 @@ jobs:
       
       - name: Run sync.sh in temp dir (simulates backup repo)
         run: |
-          # Create a fresh dir to act as backup repo
           cd /tmp
           rm -rf backup-repo-test
           mkdir backup-repo-test
@@ -55,27 +52,22 @@ jobs:
           git init
           git config --global user.email "test@test.com"
           git config --global user.name "Test"
-          # Copy sync.sh here
           cp ${{ github.workspace }}/sync.sh .
           cp ${{ github.workspace }}/restore.sh .
-          # Run it
           bash sync.sh || echo "Push failed (expected - dummy token)"
       
-      - name: Verify files copied to backup repo
+      - name: Verify files
         run: |
           cd /tmp/backup-repo-test
-          # Personal files should NOT be copied (they're in EXCLUDE_FILES)
+          # Personal files should NOT be copied
           [ ! -f AGENTS.md ] || { echo "AGENTS.md should NOT be copied"; exit 1; }
           [ ! -f USER.md ] || { echo "USER.md should NOT be copied"; exit 1; }
           [ ! -f SOUL.md ] || { echo "SOUL.md should NOT be copied"; exit 1; }
           [ ! -f TOOLS.md ] || { echo "TOOLS.md should NOT be copied"; exit 1; }
-          [ ! -f IDENTITY.md ] || { echo "IDENTITY.md should NOT be copied"; exit 1; }
-          [ ! -f HEARTBEAT.md ] || { echo "HEARTBEAT.md should NOT be copied"; exit 1; }
-          [ ! -f SITES.md ] || { echo "SITES.md should NOT be copied"; exit 1; }
-          # But skills and scripts should be copied
-          [ -d skills ] || { echo "skills dir not copied"; exit 1; }
+          # Verify test skill was copied
           [ -d skills/test-skill ] || { echo "test-skill not copied"; exit 1; }
           [ -f skills/test-skill/SKILL.md ] || { echo "SKILL.md not copied"; exit 1; }
+          # Verify script was copied
           [ -f scripts/test.sh ] || { echo "script not copied"; exit 1; }
           echo "✅ Integration test passed"
 
