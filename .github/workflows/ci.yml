@@ -84,16 +84,15 @@ jobs:
       
       - name: Prepare publishable content
         run: |
-          # Only publish the skill, not personal files
+          # ClawSync is a backup tool, not a skill itself
+          # Only publish the scripts and documentation
           mkdir -p publish
-          cp -r skills/ publish/
           cp sync.sh publish/
           cp restore.sh publish/
           cp SKILL.md publish/
           cp README.md publish/
-          # List what's in publish to debug
+          # List what's in publish to verify
           ls -la publish/
-          ls -la publish/skills/ || true
       
       - name: Publish to ClawHub
         env:
