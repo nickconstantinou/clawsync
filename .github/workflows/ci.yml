@@ -61,8 +61,15 @@ jobs:
       - name: Verify files copied to backup repo
         run: |
           cd /tmp/backup-repo-test
-          [ -f AGENTS.md ] || { echo "AGENTS.md not copied"; exit 1; }
-          [ -f USER.md ] || { echo "USER.md not copied"; exit 1; }
+          # Personal files should NOT be copied (they're in EXCLUDE_FILES)
+          [ ! -f AGENTS.md ] || { echo "AGENTS.md should NOT be copied"; exit 1; }
+          [ ! -f USER.md ] || { echo "USER.md should NOT be copied"; exit 1; }
+          [ ! -f SOUL.md ] || { echo "SOUL.md should NOT be copied"; exit 1; }
+          [ ! -f TOOLS.md ] || { echo "TOOLS.md should NOT be copied"; exit 1; }
+          [ ! -f IDENTITY.md ] || { echo "IDENTITY.md should NOT be copied"; exit 1; }
+          [ ! -f HEARTBEAT.md ] || { echo "HEARTBEAT.md should NOT be copied"; exit 1; }
+          [ ! -f SITES.md ] || { echo "SITES.md should NOT be copied"; exit 1; }
+          # But skills and scripts should be copied
           [ -d skills ] || { echo "skills not copied"; exit 1; }
           [ -f scripts/test.sh ] || { echo "script not copied"; exit 1; }
           echo "✅ Integration test passed"
