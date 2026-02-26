@@ -25,7 +25,7 @@ echo "=== ClawSync Backup ==="
 
 # === Explicit Exclusions (Hardcoded) ===
 # These files are NEVER backed up - contains secrets/sensitive data
-EXCLUDE_FILES=("SITES.md" "MEMORY.md" ".env" "credentials" "node_modules" ".git" "venv" "__pycache__")
+EXCLUDE_FILES=("SITES.md" "MEMORY.md" ".env" "credentials" "node_modules" ".git" "venv" "__pycache__" "AGENTS.md" "SOUL.md" "USER.md" "TOOLS.md" "IDENTITY.md" "HEARTBEAT.md")
 
 # === Helper: Check if file should be excluded ===
 should_exclude() {
@@ -37,15 +37,6 @@ should_exclude() {
     done
     return 1
 }
-
-# === Strict Whitelist: Identity Files ===
-WHITELIST=("AGENTS.md" "SOUL.md" "USER.md" "TOOLS.md" "IDENTITY.md" "HEARTBEAT.md")
-
-for file in "${WHITELIST[@]}"; do
-    if [[ -f "$WORKSPACE/$file" ]]; then
-        cp "$WORKSPACE/$file" "$BACKUP_DIR/"
-    fi
-done
 
 # === Safe Copy: Skills (with explicit exclusion) ===
 if [[ -d "$WORKSPACE/skills" ]]; then

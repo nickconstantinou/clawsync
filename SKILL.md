@@ -24,15 +24,16 @@ This skill is designed with defense-in-depth. Please read carefully.
 
 | Category | Files | Status |
 |----------|-------|--------|
-| **Identity Files** | AGENTS.md, SOUL.md, USER.md, TOOLS.md, IDENTITY.md, HEARTBEAT.md | ✅ Safe |
-| **Skills** | All from `$OPENCLAW/skills/` | ⚠️ Manual review |
-| **Scripts** | All from `$OPENCLAW/scripts/` | ⚠️ Manual review |
+| **Skills** | All from `$OPENCLAW/skills/` | See notes below |
+| **Scripts** | All from `$OPENCLAW/scripts/` | See notes below |
+| **Project Code** | All from `$OPENCLAW/workspace/projects/` | Excluding credentials |
 
-### Why Some Files Are Not Backed Up
+### What It Does NOT Back Up (Personal/Workspace-Specific)
 
-The following files are **NOT** backed up by design:
+These files are **explicitly excluded** as they are personal or workspace-specific:
+- **AGENTS.md, SOUL.md, USER.md, TOOLS.md, IDENTITY.md, HEARTBEAT.md** — Personal agent configuration
 - **SITES.md** — May contain API keys/secrets
-- **MEMORY.md** — May contain sensitive conversation data
+- **MEMORY.md** — Contains sensitive conversation data
 - Any file in `credentials/`, `.env`, `node_modules/`
 
 ## What It Excludes
