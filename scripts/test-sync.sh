@@ -4,8 +4,9 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="/home/openclaw/.openclaw/workspace/projects/clawsync/scripts"
-REPO_DIR="/home/openclaw/.openclaw/workspace/projects/clawsync"
+# Get repo root dynamically (works on GitHub Actions and locally)
+REPO_DIR="$(git rev-parse --show-toplevel 2>/dev/null || echo ".")"
+SCRIPT_DIR="$REPO_DIR/scripts"
 
 # Create temp directories
 WORKSPACE_DIR="/tmp/clawsync-test-workspace"
