@@ -2,11 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [master, main]
-    tags:
-      - 'v*'
+    branches: [main]
   pull_request:
-    branches: [master, main]
+    branches: [main]
 
 jobs:
   lint:
@@ -16,9 +14,7 @@ jobs:
       
       - name: Run ShellCheck
         run: |
-          # Install shellcheck
           apt-get update && apt-get install -y shellcheck
-          # Lint scripts
           shellcheck sync.sh restore.sh scripts/test-*.sh || true
 
   test:
@@ -34,7 +30,7 @@ jobs:
 
   publish:
     needs: [lint, test]
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,14 +41,11 @@ jobs:
       
       - name: Prepare publishable content
         run: |
-          # ClawSync is a backup tool, not a skill itself
-          # Only publish the scripts and documentation
           mkdir -p publish
           cp sync.sh publish/
           cp restore.sh publish/
           cp SKILL.md publish/
           cp README.md publish/
-          # List what's in publish to verify
           ls -la publish/
       
       - name: Publish to ClawHub
@@ -62,5 +55,6 @@ jobs:
           cd publish
           npm install -g clawhub
           clawhub login --token "$CLAWHUB_TOKEN" --no-browser
-          VERSION=${GITHUB_REF#refs/tags/v}
+          # Use commit date as version
+          VERSION=$(date +%Y.%m.%d)
           clawhub publish . --version $VERSION
